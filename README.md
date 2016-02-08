@@ -1,4 +1,4 @@
-# C-game-of-life
+# C++-game-of-life
 
 The Game of Life, invented by John H. Conway, is supposed to model the genetic laws for birth, survival, and death. We will play the game on a board that consists of M squares in the horizontal direction and N squares in the vertical direction (0<M<40, 0<N<40).  Each square (except for border squares, on the edges of the board) can be empty or can contain an X indicating the presence of an organism. Each square (except for border squares) has eight neighbors. The next generation of organisms (the next turn in the game) is determined according to the following criteria.
 
