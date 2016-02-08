@@ -1,0 +1,374 @@
+#include<iostream>
+#include<fstream>
+
+using namespace std;
+
+
+// Should be defined as a global variable indicating the max rows and columns should be less than 40 but greater than 0
+#define MAX_ARRAY_SIZE 39
+
+// Functions required as stated by the problem
+void PrintGen(char lifeBoard[ ][MAX_ARRAY_SIZE],  ostream& outStream,  int numRowsInBoard,
+                         int numColsInBoard, int generationNum);
+
+void NextGen (char lifeBoard[ ][MAX_ARRAY_SIZE],  int numRowsInBoard,    int numColsInBoard);
+
+
+
+int main ()
+{
+        char inputName[80];
+        char outputName[80];
+        char myLifeBoard[MAX_ARRAY_SIZE][MAX_ARRAY_SIZE];
+        int Read1;
+        int Read2;
+        int Read3;
+        int rows;
+        int cols;
+		int gen = 0;
+        char nRead;
+        ifstream inFile;
+        ofstream outFile;
+
+        cout << "LIFE Enter the name of the input file: ";
+        cin >> inputName;
+        inFile.open(inputName);
+
+        if (inFile.fail())
+        {
+                cerr << "ERROR: input file not opened correctly " << endl;
+                return 1;
+        }
+
+        cout << "Enter the name of the output file: ";
+        cin >> outputName;
+        outFile.open(outputName);
+
+        if (outFile.fail())
+        {
+                cerr << "ERROR: output file not opened correctly " << endl;
+                return 1;
+        }
+
+		//3 integers are read and it follows
+        //Read1 = The number of rows in the game board
+        //Read2 = The number of columns in the game board
+        //Read3 = The number of generations to be calculated
+
+		// This block of code is the initial read for the 3 integers in the input file
+		// This will verify if they are valid inputs or not
+        if (!(inFile >> Read1))
+        {
+                if(inFile.eof())
+                {
+                        cerr << "ERROR: input file is empty ";
+                        return 1;
+                }
+                else
+                {
+                        cerr << "ERROR: Cannot read number of rows ";
+                        return 1;
+                }
+                
+        }
+        if (Read1 <= 0 || Read1 >= 40)
+        {
+                cerr << "ERROR: Read an illegal number of rows for the board ";
+                return 1;
+        }
+
+        if (!(inFile >> Read2))
+        {
+                cerr << "ERROR: Cannot read number of columns ";
+                return 1;
+        }
+
+        if (Read2 <= 0 || Read2 >= 40)
+        {
+                cerr << "ERROR: Read an illegal number of columns for the board ";
+                return 1;
+        }
+
+        if (!(inFile >> Read3))
+        {
+                cerr << "ERROR: Cannot read the number of generations ";
+                return 1;
+        }
+
+        if (Read3 < 1)
+        {
+                cerr << "ERROR: Read an illegal number of generations ";
+                return 1;
+        }
+
+        //initial errors complete
+        //verifying initial data
+
+		// This FOR loop will verify initial board data as given in the input file
+		// Its important that you must check for any 'X's on the boarder of the board
+		// If there is then it becomes impossible to calculate the next generations! (i.e exit program)
+        for (rows = 0; rows < Read1; rows++)
+        {
+                for (cols = 0; cols < Read2; cols++)
+                {												
+                        inFile >> nRead;
+
+						// 1 If statement and a bunch of if else statements should do it
+						// Order of the if statements are important (i.e. in which error you should check first)
+                        if (inFile.eof())
+                        {
+							cerr << "ERROR: Not enough data in the input file";
+							return 1;
+                        }
+						else if (myLifeBoard[0][cols] == 'X') //row 0
+						{
+							cerr << "ERROR: organisms are present in the border of the board, please correct your input file";
+							return 1;
+						}
+						else if (myLifeBoard[Read1-1][cols] == 'X') //row max
+						{
+							cerr << "ERROR: organisms are present in the border of the board, please correct your input file";
+							return 1;
+						}
+						else if (myLifeBoard[rows][0] == 'X') //col 0
+						{
+							cerr << "ERROR: organisms are present in the border of the board, please correct your input file";
+							return 1;
+						}
+						else if (myLifeBoard[0][Read2-1] == 'X') //col max
+						{
+							cerr << "ERROR: organisms are present in the border of the board, please correct your input file";
+							return 1;
+						}
+                        else if ((nRead == '.') || (nRead == 'X'))
+                        {
+							myLifeBoard[rows][cols] = nRead;
+                        }
+                        else
+                        {
+                            cerr << "ERROR: Input data for initial board is incorrect " << endl;
+                            cerr << "Location ("<< rows <<", "<< cols <<") is not valid";
+                            return 1;
+                        }
+
+                }
+                       
+        }
+
+        //verifying complete
+        //initializing functions
+		
+		// When printing to the screen, its noted in the problem that for the intitial board, 
+		// The intial board, the first generation and the last generation is the only thing that will be printed and nothing else
+		// For the output file everything must be printed!
+		for (gen = 0; gen <= Read3; gen++)
+		{
+			if (gen == 0)
+			{
+				PrintGen( myLifeBoard, outFile, Read1, Read2, gen);
+				PrintGen( myLifeBoard, cout, Read1, Read2, gen);
+			}
+			else if (gen == 1)
+			{
+				NextGen(myLifeBoard, Read1, Read2);
+				PrintGen( myLifeBoard, outFile, Read1, Read2, gen);
+				PrintGen( myLifeBoard, cout, Read1, Read2, gen);
+			}
+			else if (gen == Read3)
+			{
+				NextGen(myLifeBoard, Read1, Read2);
+				PrintGen( myLifeBoard, outFile, Read1, Read2, gen);
+				PrintGen( myLifeBoard, cout, Read1, Read2, gen);
+			}
+			else
+			{
+				NextGen(myLifeBoard, Read1, Read2);
+				PrintGen(myLifeBoard, outFile, Read1, Read2, gen);
+			}
+		}
+		
+
+        return 0;
+}
+
+
+// This function will calculate the next generation of your lifeBoard (i.e. updates your lifeBoard)
+void NextGen (char lifeBoard[ ][MAX_ARRAY_SIZE],  int numRowsInBoard,    int numColsInBoard)
+{
+	int numrows;
+	int numcols;
+	int count = 0;
+	char nexGenBoard[MAX_ARRAY_SIZE][MAX_ARRAY_SIZE];
+	
+
+	// Before you begin transfering data its very important that you initialize your nexGenBoard full of 'dots'
+	// This way it will prevent alot of errors that might occur
+	for (numrows = 0; numrows < numRowsInBoard; numrows++)
+	{
+		for (numcols = 0; numcols < numColsInBoard; numcols++)
+		{
+			nexGenBoard[numrows][numcols] = '.';
+		}
+
+	}
+
+	// Remeber to start calculating the next generation from row = 1 and col = 1
+	// This is because the boarders of the board must not contain any 'X'
+	// Also if you start at row = 1 and col = 1, don't forget to end one row and one column early as well
+	for (numrows = 1; numrows < (numRowsInBoard-1); numrows++)
+	{
+		
+		for (numcols = 1; numcols < (numColsInBoard-1); numcols++)
+		{
+			// Please note that there are 16 cases you must test!
+			// First 8 cases are if the element is a 'dot'
+			// Last 8 cases are if the element is a 'X'
+			// To check the adjcent members, its advisable to draw a small table by hand to check the columns and rows
+			if (lifeBoard[numrows][numcols] == '.')
+			{
+				if (lifeBoard[numrows][numcols-1] == 'X')
+				{
+					count++;
+				}
+				if (lifeBoard[numrows-1][numcols-1] == 'X')
+				{
+					count++;
+				}
+				if (lifeBoard[numrows+1][numcols-1] == 'X')
+				{
+					count++;
+				}
+				if (lifeBoard[numrows][numcols+1] == 'X')
+				{
+					count++;
+				}
+				if (lifeBoard[numrows-1][numcols+1] == 'X')
+				{
+					count++;
+				}
+				if (lifeBoard[numrows+1][numcols+1] == 'X')
+				{
+					count++;
+				}
+				if (lifeBoard[numrows-1][numcols] == 'X')
+				{
+					count++;
+				}
+				if (lifeBoard[numrows+1][numcols] == 'X')
+				{
+					count++;
+				}
+				if (count == 3)
+				{
+					nexGenBoard[numrows][numcols] = 'X';
+				}
+				count = 0;
+			}
+			else if (lifeBoard[numrows][numcols] == 'X')
+			{
+				if (lifeBoard[numrows][numcols-1] == 'X')
+				{
+					count++;
+				}
+				if (lifeBoard[numrows-1][numcols-1] == 'X')
+				{
+					count++;
+				}
+				if (lifeBoard[numrows+1][numcols-1] == 'X')
+				{
+					count++;
+				}
+				if (lifeBoard[numrows][numcols+1] == 'X')
+				{
+					count++;
+				}
+				if (lifeBoard[numrows-1][numcols+1] == 'X')
+				{
+					count++;
+				}
+				if (lifeBoard[numrows+1][numcols+1] == 'X')
+				{
+					count++;
+				}
+				if (lifeBoard[numrows-1][numcols] == 'X')
+				{
+					count++;
+				}
+				if (lifeBoard[numrows+1][numcols] == 'X')
+				{
+					count++;
+				}
+				if (count == 2 || count == 3)
+				{
+					nexGenBoard[numrows][numcols] = 'X';
+				}
+				else if (count >= 4)
+				{
+					nexGenBoard[numrows][numcols] = '.';
+				}
+				else
+				{
+					nexGenBoard[numrows][numcols] = '.';
+				}
+				count = 0;
+			}
+			else
+			{
+				nexGenBoard[numrows][numcols] = '.';
+				count = 0;
+			}
+		}
+	}
+
+	// After the generation has been calculated your nexGenBoard information must be copied to your lifeBoard!
+	// If you don't your lifeBoard in the main function will never get updated, and 
+	// Therefore you will never be able to calculate the incoming generations!
+	for (numrows = 0; numrows < numRowsInBoard; numrows++)
+	{
+		for (numcols = 0; numcols < numColsInBoard; numcols++)
+		{
+
+			lifeBoard[numrows][numcols] = nexGenBoard[numrows][numcols];
+
+		}
+
+	}
+
+
+}
+
+
+// This function will print the current/updated lifeBoard as required by your main function calls
+void PrintGen(char lifeBoard[ ][MAX_ARRAY_SIZE],  ostream& outStream,  int numRowsInBoard,
+                         int numColsInBoard, int generationNum)
+{
+
+	int numrows = 0;
+	int numcols = 0;
+
+	// Note: the title of the initial board must be printed
+	if (generationNum == 0)
+	{
+		outStream << "LIFE initial game board" << endl << endl;	
+	}
+	else
+	{
+		outStream << "LIFE gameboard: generation " << generationNum << endl;
+	}
+
+	// Printing the lifeboard
+	for (numrows = 0; numrows < numRowsInBoard; numrows++)
+	{
+		for (numcols = 0; numcols < numColsInBoard; numcols++)
+		{
+			
+			outStream << lifeBoard[numrows][numcols] << " ";
+
+		}
+		outStream << endl;
+	}
+
+	outStream << endl << endl << endl;
+}
+
+
